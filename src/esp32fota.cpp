@@ -138,53 +138,66 @@ void esp32FOTA::execOTA()
     // check contentLength and content type
     if (contentLength && isValidContentType)
     {
-        // Check if there is enough to OTA Update
-        bool canBegin = Update.begin(contentLength);
-
-        // If yes, begin
-        if (canBegin)
+        bool validationPassed = true;
+        if (_validationCallback != nullptr)
         {
-            Serial.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quiet for a while.. Patience!");
-            // No activity would appear on the Serial monitor
-            // So be patient. This may take 2 - 5mins to complete
-            size_t written = Update.writeStream(client);
+            validationPassed = _validationCallback(client);
+        }
 
-            if (written == contentLength)
-            {
-                Serial.println("Written : " + String(written) + " successfully");
-            }
-            else
-            {
-                Serial.println("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?");
-                // retry??
-                // execOTA();
-            }
+        if (validationPassed)
+        {
+            // Check if there is enough to OTA Update
+            bool canBegin = Update.begin(contentLength);
 
-            if (Update.end())
+            // If yes, begin
+            if (canBegin)
             {
-                Serial.println("OTA done!");
-                if (Update.isFinished())
+                Serial.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quiet for a while.. Patience!");
+                // No activity would appear on the Serial monitor
+                // So be patient. This may take 2 - 5mins to complete
+                size_t written = Update.writeStream(client);
+
+                if (written == contentLength)
                 {
-                    Serial.println("Update successfully completed. Rebooting.");
-                    ESP.restart();
+                    Serial.println("Written : " + String(written) + " successfully");
                 }
                 else
                 {
-                    Serial.println("Update not finished? Something went wrong!");
+                    Serial.println("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?");
+                    // retry??
+                    // execOTA();
+                }
+
+                if (Update.end())
+                {
+                    Serial.println("OTA done!");
+                    if (Update.isFinished())
+                    {
+                        Serial.println("Update successfully completed. Rebooting.");
+                        ESP.restart();
+                    }
+                    else
+                    {
+                        Serial.println("Update not finished? Something went wrong!");
+                    }
+                }
+                else
+                {
+                    Serial.println("Error Occurred. Error #: " + String(Update.getError()));
                 }
             }
             else
             {
-                Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+                // not enough space to begin OTA
+                // Understand the partitions and
+                // space availability
+                Serial.println("Not enough space to begin OTA");
+                client.flush();
             }
         }
         else
         {
-            // not enough space to begin OTA
-            // Understand the partitions and
-            // space availability
-            Serial.println("Not enough space to begin OTA");
-            client.flush();
+            Serial.println("Firmware validation failed!");
         }
     }
     else
@@ -289,6 +302,10 @@ void esp32FOTA::forceUpdate(String firmwareHost, int firmwarePort, String firmwa
  */
 int esp32FOTA::getPayloadVersion(){
     return _payloadVersion;
+}
+
+void esp32FOTA::setValidationCallback(std::function<bool(WiFiClient&)> &func){
+    _validationCallback = func;
 }
 
 //=============================================================================
@@ -516,44 +533,57 @@ void secureEsp32FOTA::executeOTA()
 
         if (contentLength && isValid)
         {
-            //Serial.println("beginn");
-            bool canBegin = Update.begin(contentLength);
-            if (canBegin)
+            bool validationPassed = true;
+            if (_validationCallback != nullptr)
             {
-                //Serial.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quite for a while.. Patience!");
+                validationPassed = _validationCallback(clientForOta);
+            }
 
-                size_t written = Update.writeStream(clientForOta);
+            if (validationPassed)
+            {
+                //Serial.println("beginn");
+                bool canBegin = Update.begin(contentLength);
+                if (canBegin)
+                {
+                    //Serial.println("Begin OTA. This may take 2 - 5 mins to complete. Things might be quite for a while.. Patience!");
 
-                if (written == contentLength)
-                {
-                    //Serial.println("Written : " + String(written) + " successfully");
-                }
-                else
-                {
-                    //Serial.println("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?");
-                }
+                    size_t written = Update.writeStream(clientForOta);
 
-                if (Update.end())
-                {
-                    Serial.println("OTA done!");
-                    if (Update.isFinished())
+                    if (written == contentLength)
                     {
-                        Serial.println("Update successfully completed. Rebooting.");
-                        ESP.restart();
+                        //Serial.println("Written : " + String(written) + " successfully");
                     }
                     else
                     {
-                        Serial.println("Update not finished? Something went wrong!");
+                        //Serial.println("Written only : " + String(written) + "/" + String(contentLength) + ". Retry?");
+                    }
+
+                    if (Update.end())
+                    {
+                        Serial.println("OTA done!");
+                        if (Update.isFinished())
+                        {
+                            Serial.println("Update successfully completed. Rebooting.");
+                            ESP.restart();
+                        }
+                        else
+                        {
+                            Serial.println("Update not finished? Something went wrong!");
+                        }
+                    }
+                    else
+                    {
+                        Serial.println("Error Occurred. Error #: " + String(Update.getError()));
                     }
                 }
                 else
                 {
-                    Serial.println("Error Occurred. Error #: " + String(Update.getError()));
+                    Serial.println(" could not begin");
                 }
             }
             else
             {
-                Serial.println(" could not begin");
+                Serial.println("Firmware validation failed!");
             }
         }
         else
@@ -565,4 +595,8 @@ void secureEsp32FOTA::executeOTA()
     {
         Serial.println("Generic error");
     }
+}
+
+void secureEsp32FOTA::setValidationCallback(std::function<bool(WiFiClientSecure&)> &func){
+    _validationCallback = func;
 }

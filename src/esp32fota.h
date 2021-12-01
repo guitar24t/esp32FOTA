@@ -9,7 +9,9 @@
 #define esp32fota_h
 
 #include "Arduino.h"
+#include <WiFiClient.h>
 #include <WiFiClientSecure.h>
+#include <functional>
 
 class esp32FOTA
 {
@@ -19,6 +21,7 @@ public:
   void execOTA();
   bool execHTTPcheck();
   int getPayloadVersion();
+  void setValidationCallback(std::function<bool(WiFiClient&)> &func);
   bool useDeviceID;
   String checkURL;
 
@@ -30,7 +33,7 @@ private:
   String _host;
   String _bin;
   int _port;
-
+  std::function<bool(WiFiClient&)> _validationCallback;
 };
 
 class secureEsp32FOTA
@@ -44,6 +47,7 @@ public:
   char *_certificate;
   unsigned int _securePort = 443;
   WiFiClientSecure clientForOta;
+  void setValidationCallback(std::function<bool(WiFiClientSecure&)> &func);
   String _host;
 
 private:
@@ -56,6 +60,7 @@ private:
   String locationOfFirmware;
   String _bin;
   int _port;
+  std::function<bool(WiFiClientSecure&)> _validationCallback;
 };
 
 #endif
