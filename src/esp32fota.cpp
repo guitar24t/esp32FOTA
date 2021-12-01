@@ -304,6 +304,9 @@ int esp32FOTA::getPayloadVersion(){
     return _payloadVersion;
 }
 
+/**
+ * This function allows you to set a custom validation callback to validate that the firmware image is secure/signed.
+ */
 void esp32FOTA::setValidationCallback(const std::function<bool(WiFiClient&)> &func){
     _validationCallback = func;
 }
@@ -597,6 +600,9 @@ void secureEsp32FOTA::executeOTA()
     }
 }
 
+/**
+ * This function allows you to set a custom validation callback to validate that the firmware image is secure/signed.
+ */
 void secureEsp32FOTA::setValidationCallback(const std::function<bool(WiFiClientSecure&)> &func){
     _validationCallback = func;
 }
