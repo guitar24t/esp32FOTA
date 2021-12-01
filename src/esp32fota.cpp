@@ -304,7 +304,7 @@ int esp32FOTA::getPayloadVersion(){
     return _payloadVersion;
 }
 
-void esp32FOTA::setValidationCallback(std::function<bool(WiFiClient&)> &func){
+void esp32FOTA::setValidationCallback(const std::function<bool(WiFiClient&)> &func){
     _validationCallback = func;
 }
 
@@ -597,6 +597,6 @@ void secureEsp32FOTA::executeOTA()
     }
 }
 
-void secureEsp32FOTA::setValidationCallback(std::function<bool(WiFiClientSecure&)> &func){
+void secureEsp32FOTA::setValidationCallback(const std::function<bool(WiFiClientSecure&)> &func){
     _validationCallback = func;
 }

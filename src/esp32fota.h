@@ -21,7 +21,7 @@ public:
   void execOTA();
   bool execHTTPcheck();
   int getPayloadVersion();
-  void setValidationCallback(std::function<bool(WiFiClient&)> &func);
+  void setValidationCallback(const std::function<bool(WiFiClient&)> &func);
   bool useDeviceID;
   String checkURL;
 
@@ -47,7 +47,7 @@ public:
   char *_certificate;
   unsigned int _securePort = 443;
   WiFiClientSecure clientForOta;
-  void setValidationCallback(std::function<bool(WiFiClientSecure&)> &func);
+  void setValidationCallback(const std::function<bool(WiFiClientSecure&)> &func);
   String _host;
 
 private:
